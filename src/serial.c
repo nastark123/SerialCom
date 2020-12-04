@@ -1,28 +1,48 @@
 #include "serial.h"
 
+// sends the data pointed to by buff and reads the response back into buff
+// returns the number of bytes read
+int send_and_rec_data(serial_dev *dev, void *buff) {
+
+    write(dev->fd, buff, strlen(buff));
+
+    memset(buff, 0, 256);
+
+    return read(dev->fd, buff, 256);
+}
+
 // returns a file descriptor to the serial device if successful, or error code if not
 // dev is a string that is the path to the device, usually /dev/ttyX or /dev/ttyACMX
 // timeout is in .1's of a second and can range from 0 to 255, defaults to 10 if out of bounds
-int initialize_serial(char *dev, int baud, int timeout) {
-    int fd = open(dev, O_RDWR | O_NOCTTY | O_SYNC);
+int initialize_serial(serial_dev *dev) {
+    dev->fd = open(dev->dev, O_RDWR | O_NOCTTY | O_SYNC);
+    // printf("fd: %d\n", dev->fd);
+    // printf("Past fd\n");
 
-    if(fd < 0) return -1;
+    if(dev->fd < 0) return -1;
 
     struct termios *t;
+    t = malloc(sizeof(struct termios));
 
-    if(tcgetattr(fd, t) != 0) return -1;
+    if(tcgetattr(dev->fd, t) != 0) return -1;
+    // printf("Past tcgetattr\n");
 
     cfmakeraw(t);
+    // printf("Past cfmakeraw\n");
 
     t->c_cc[VMIN] = 0;
-    t->c_cc[VTIME] = (timeout < 255) ? timeout : 10;
+    t->c_cc[VTIME] = (dev->timeout < 255) ? dev->timeout : 10;
 
-    cfsetispeed(t, baud);
-    cfsetospeed(t, baud);
+    cfsetispeed(t, dev->baud);
+    cfsetospeed(t, dev->baud);
+    // printf("Past setting speeds\n");
 
-    if(tcsetattr(fd, TCSANOW, t) != 0) return -1;
+    if(tcsetattr(dev->fd, TCSANOW, t) != 0) return -1;
+    // printf("Past tcsetattr\n");
 
-    return fd;
+    free(t);
+
+    return dev->fd;
 }
 
 // takes the passed baudrate and converts it to the macros in termios.h
