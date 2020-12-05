@@ -15,6 +15,8 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    int mode = MODE_ASCII;
+
     long baud = strtol(argv[2], NULL, 10);
 
     baud = parse_baud(baud);
@@ -50,9 +52,14 @@ int main(int argc, char *argv[]) {
 
         switch(parse_cmd(buff)) {
             case NOTHING:
-                n = send_and_rec_data(dev, buff);
+                if(mode == MODE_HEX) n = parse_hex(buff);
+                else n = strlen(buff);
+                n = send_and_rec_data(dev, buff, n);
                 printf("\nRead %d bytes from device\n\n", n);
                 printf("Data: %s\n", buff);
+
+                // not sure if this is necessary, but if memcpy resizes I think it is
+                buff = realloc(buff, 256);
                 break;
 
             case DISCONNECT:
@@ -77,6 +84,22 @@ int main(int argc, char *argv[]) {
                     printf("\nError %d: ", errno);
                     printf("%s\n", strerror(errno));
                 }
+                break;
+
+            case LSCMD:
+                ls_cmd();
+                break;
+
+            case LSBD:
+                ls_bd();
+                break;
+
+            case LSMODE:
+                ls_mode();
+                break;
+
+            case CHMODE:
+                mode = ch_mode(buff);
                 break;
 
             default:

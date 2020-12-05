@@ -21,6 +21,6 @@ int initialize_serial(serial_dev *dev);
 
 int parse_baud(long baud);
 
-int send_and_rec_data(serial_dev *dev, void *buff);
+int send_and_rec_data(serial_dev *dev, void *buff, int n);
 
 #endif

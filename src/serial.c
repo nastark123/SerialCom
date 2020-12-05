@@ -2,9 +2,9 @@
 
 // sends the data pointed to by buff and reads the response back into buff
 // returns the number of bytes read
-int send_and_rec_data(serial_dev *dev, void *buff) {
+int send_and_rec_data(serial_dev *dev, void *buff, int n) {
 
-    write(dev->fd, buff, strlen(buff));
+    write(dev->fd, buff, n);
 
     memset(buff, 0, 256);
 
