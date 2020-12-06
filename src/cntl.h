@@ -15,6 +15,7 @@
 
 #define MODE_ASCII 0
 #define MODE_HEX 1
+#define MODE_FILE 2
 
 unsigned int parse_cmd(char *cmd);
 int disconnect(serial_dev *dev);
@@ -25,6 +26,5 @@ void ls_bd();
 void ls_mode();
 int ch_mode(char *cmd);
 int parse_hex(char *str);
-
 
 #endif

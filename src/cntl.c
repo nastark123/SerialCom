@@ -99,6 +99,7 @@ void ls_mode() {
     printf("\nCurrently supported modes:\n");
     printf("ascii - interpret characters as ascii (default)\n");
     printf("hex - translate characters as space delimited hexadecimal\n");
+    printf("file - reads data from a file and writes it to the serial device\n");
 }
 
 int ch_mode(char *cmd) {
@@ -116,6 +117,10 @@ int ch_mode(char *cmd) {
         free(mode);
         printf("\nNow in HEX mode\n");
         return MODE_HEX;
+    } else if(!strncmp(mode, "file", 4)) {
+        free(mode);
+        printf("\nNow in file mode\n");
+        return MODE_FILE;
     }
 }
 

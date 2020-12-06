@@ -52,14 +52,25 @@ int main(int argc, char *argv[]) {
 
         switch(parse_cmd(buff)) {
             case NOTHING:
-                if(mode == MODE_HEX) n = parse_hex(buff);
-                else n = strlen(buff);
+                // remove the newline character from the buffer
+                buff[strlen(buff) - 1] = '\0';
+                if(mode == MODE_HEX) {
+                    n = parse_hex(buff);
+                } else if(mode == MODE_FILE) {
+                    int f = open(buff, O_RDONLY);
+                    if(f < 0) printf("\nError opening file\n");
+                    n = read(f, buff, 256);
+                    close(f);
+                } else {
+                    n = strlen(buff);
+                }
                 n = send_and_rec_data(dev, buff, n);
                 printf("\nRead %d bytes from device\n\n", n);
                 printf("Data: %s\n", buff);
 
                 // not sure if this is necessary, but if memcpy resizes I think it is
                 buff = realloc(buff, 256);
+
                 break;
 
             case DISCONNECT:
