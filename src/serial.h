@@ -15,6 +15,8 @@ typedef struct serial_dev {
     char *dev;
     int baud;
     int timeout;
+    int in_mode;
+    int out_mode;
 } serial_dev;
 
 int initialize_serial(serial_dev *dev);

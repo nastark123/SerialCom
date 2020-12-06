@@ -9,37 +9,49 @@
 #include "cntl.h"
 
 int main(int argc, char *argv[]) {
-    
-    if(argc < 3) {
-        printf("Usage: device baudrate\n");
-        return -1;
-    }
 
-    int mode = MODE_ASCII;
-
-    long baud = strtol(argv[2], NULL, 10);
-
-    baud = parse_baud(baud);
-
+    char *setup = malloc(256);
     serial_dev *dev;
     dev = malloc(sizeof(serial_dev));
-    dev->baud = baud; // baudrate for the serial communication
-    dev->dev = malloc(strlen(argv[1])); // path to the device we're connecting to
-    strcpy(dev->dev, argv[1]);
-    dev->timeout = 10; // timeout in .1's of a second for reads from this device
 
+    printf("Welcome to SerialCom!  What device would you like to connect to?\n");
+    fgets(setup, 256, stdin);
+    setup[strlen(setup) - 1] = '\0';
+    dev->dev = malloc(strlen(setup));
+    strcpy(dev->dev, setup);
+
+    printf("\nWhat baud rate would you like to use?\n");
+    memset(setup, 0, 256);
+    fgets(setup, 256, stdin);
+    long baud = strtol(argv[2], NULL, 10);
+    baud = parse_baud(baud);
+    dev->baud = baud;
+
+    printf("\nWhat would you like as your starting input mode (ascii, hex, or file)?\n");
+    memset(setup, 0, 256);
+    fgets(setup, 256, stdin);
+    dev->in_mode = init_mode(setup);
+
+    printf("\nWhat would you like as your starting output mode (ascii, hex, or file)?\n");
+    memset(setup, 0, 256);
+    fgets(setup, 256, stdin);
+    dev->out_mode = init_mode(setup);
+
+    printf("\nWhat would you like the timeout to be (in 0.1's of a second):\n");
+    memset(setup, 0, 256);
+    fgets(setup, 256, stdin);
+    dev->timeout = strtol(setup, NULL, 10);
+
+    free(setup);
 
     initialize_serial(dev);
 
     if(dev->fd < 0) {
         printf("Error %d while initializing: ", errno);
         printf("%s\n", strerror(errno));
-
-        return -1;
+    } else {
+        printf("Device opened and initialized\n");
     }
-
-    printf("Device opened and initialized\n");
-
     char *buff = malloc(256);
     
     for(;;) {
@@ -54,9 +66,10 @@ int main(int argc, char *argv[]) {
             case NOTHING:
                 // remove the newline character from the buffer
                 buff[strlen(buff) - 1] = '\0';
-                if(mode == MODE_HEX) {
+
+                if(dev->in_mode == MODE_HEX) {
                     n = parse_hex(buff);
-                } else if(mode == MODE_FILE) {
+                } else if(dev->in_mode == MODE_FILE) {
                     int f = open(buff, O_RDONLY);
                     if(f < 0) printf("\nError opening file\n");
                     n = read(f, buff, 256);
@@ -64,9 +77,10 @@ int main(int argc, char *argv[]) {
                 } else {
                     n = strlen(buff);
                 }
+
                 n = send_and_rec_data(dev, buff, n);
-                printf("\nRead %d bytes from device\n\n", n);
-                printf("Data: %s\n", buff);
+                
+                display_output(buff, n, dev->out_mode);
 
                 // not sure if this is necessary, but if memcpy resizes I think it is
                 buff = realloc(buff, 256);
@@ -109,8 +123,12 @@ int main(int argc, char *argv[]) {
                 ls_mode();
                 break;
 
-            case CHMODE:
-                mode = ch_mode(buff);
+            case IMODE:
+                dev->in_mode = ch_mode(buff);
+                break;
+
+            case OMODE:
+                dev->out_mode = ch_mode(buff);
                 break;
 
             default:

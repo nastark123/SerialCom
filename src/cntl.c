@@ -1,5 +1,42 @@
 #include "cntl.h"
 
+int display_output(char *out, int len, int out_mode) {
+    switch(out_mode) {
+        case MODE_ASCII:
+            printf("\nRead %d bytes from device\n", len);
+            printf("Data: %s\n", out);
+            break;
+
+        case MODE_HEX:
+            printf("\nRead %d bytes from device:\n", len);
+            for(int i = 0; i < len; i++) {
+                printf("%x ", out[i]);
+            }
+            printf("\n");
+            break;
+
+        case MODE_FILE:
+            printf("\nInput a filename to write to:\n");
+            char *file = malloc(256);
+            fgets(file, 256, stdin);
+            file[strlen(file) - 1] = '\0';
+
+            int f = open(file, O_RDWR);
+            if(f < 0) printf("Error opening file\n");
+            write(f, out, len);
+            close(f);
+                    
+            printf("\nWrote %d bytes to file %s\n", len, file);
+            free(file);
+            break;
+
+        default:
+            printf("\nRead %d bytes from device\n", len);
+            printf("Data: %s\n", out);
+            break;
+    }
+}
+
 unsigned int parse_cmd(char *cmd) {
 
     if(!strncmp(cmd, "!dc", 3)) { // disconnect from the device
@@ -8,14 +45,16 @@ unsigned int parse_cmd(char *cmd) {
         return CHDEVICE;
     } else if(!strncmp(cmd, "!chbd ", 6)) { // change the baudrate and reconnect
         return CHBAUD;
-    } else if(!strncmp(cmd, "!lscmd ", 7)) { // change the device we're connected to
+    } else if(!strncmp(cmd, "!lscmd ", 7)) {
         return LSCMD;
-    } else if(!strncmp(cmd, "!lsbd ", 6)) { // change the baudrate and reconnect
+    } else if(!strncmp(cmd, "!lsbd ", 6)) {
         return LSBD;
-    } else if(!strncmp(cmd, "!lsmode ", 8)) { // change the device we're connected to
+    } else if(!strncmp(cmd, "!lsmode ", 8)) {
         return LSMODE;
-    } else if(!strncmp(cmd, "!chmode ", 8)) { // change the baudrate and reconnect
-        return CHMODE;
+    } else if(!strncmp(cmd, "!imode ", 7)) {
+        return IMODE;
+    } else if(!strncmp(cmd, "!omode ", 7)) {
+        return OMODE;
     }
 
     return NOTHING;
@@ -76,7 +115,8 @@ void ls_cmd(){
     printf("dc - disconnect from the current serial device\n");
     printf("chdev - change the device you are currently connected to\n");
     printf("chbd - change the baud rate of the serial connection\n");
-    printf("chmode - change the mode to one of the supported modes\n");
+    printf("imode - change the mode to one of the supported input modes\n");
+    printf("omode - change the mode to one of the supported input modes\n");
     printf("lscmd - list all commands\n");
     printf("lsbd - list all the supported baud rates compiled into this executable\n");
     printf("lsmode - lists all supported modes (ascii, hex, etc.)\n");
@@ -103,10 +143,10 @@ void ls_mode() {
 }
 
 int ch_mode(char *cmd) {
-    char *mode = malloc(strlen(cmd) - 7);
+    char *mode = malloc(strlen(cmd) - 6);
 
-    for(int i = 8; i < strlen(cmd); i++) {
-        mode[i - 8] = cmd[i];
+    for(int i = 7; i < strlen(cmd); i++) {
+        mode[i - 7] = cmd[i];
     }
 
     if(!strncmp(mode, "ascii", 5)) {
@@ -122,8 +162,26 @@ int ch_mode(char *cmd) {
         printf("\nNow in file mode\n");
         return MODE_FILE;
     }
+
 }
 
+// yes i realize im repeating myself, will probably refactor later
+int init_mode(char *cmd) {
+
+    if(!strncmp(cmd, "ascii", 5)) {
+        printf("\nSet to ASCII mode\n");
+        return MODE_ASCII;
+    } else if(!strncmp(cmd, "hex", 3)) {
+        printf("\nSet to HEX mode\n");
+        return MODE_HEX;
+    } else if(!strncmp(cmd, "file", 4)) {
+        printf("\nSet to file mode\n");
+        return MODE_FILE;
+    }
+
+    printf("\nUnrecognized mode, starting in ASCII\n");
+    return MODE_ASCII;
+}
 
 // converts the characters in str to hex byte values and stores them in str
 // returns the number of bytes that were written to str
