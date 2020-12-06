@@ -40,24 +40,46 @@ int display_output(char *out, int len, int out_mode) {
 unsigned int parse_cmd(char *cmd) {
 
     if(!strncmp(cmd, "!dc", 3)) { // disconnect from the device
+        remove_cmd(cmd, 3);
         return DISCONNECT;
     } else if(!strncmp(cmd, "!chdev ", 7)) { // change the device we're connected to
+        remove_cmd(cmd, 7);
         return CHDEVICE;
     } else if(!strncmp(cmd, "!chbd ", 6)) { // change the baudrate and reconnect
+        remove_cmd(cmd, 6);
         return CHBAUD;
     } else if(!strncmp(cmd, "!lscmd ", 7)) {
+        remove_cmd(cmd, 7);
         return LSCMD;
     } else if(!strncmp(cmd, "!lsbd ", 6)) {
+        remove_cmd(cmd, 6);
         return LSBD;
     } else if(!strncmp(cmd, "!lsmode ", 8)) {
+        remove_cmd(cmd, 8);
         return LSMODE;
     } else if(!strncmp(cmd, "!imode ", 7)) {
+        remove_cmd(cmd, 7);
         return IMODE;
     } else if(!strncmp(cmd, "!omode ", 7)) {
+        remove_cmd(cmd, 7);
         return OMODE;
     }
 
     return NOTHING;
+}
+
+// removes the first n characters of cmd
+int remove_cmd(char *cmd, int n) {
+    char *tmp = malloc(strlen(cmd) - n);
+    for(int i = n; i < strlen(cmd) - 1; i++) {
+        tmp[i - n] = cmd[i];
+    }
+
+    strcpy(cmd, tmp);
+
+    free(tmp);
+
+    return 0;
 }
 
 int disconnect(serial_dev *dev) {
@@ -73,13 +95,9 @@ int ch_dev(serial_dev *dev, char *cmd) {
         int r = disconnect(dev);
         if (r < 0) return -1;
     }
-    dev->dev = realloc(dev->dev, strlen(cmd) - 6);
-    memset(dev->dev, 0, strlen(cmd) - 6);
 
-    // we go up to strlen - 1 to avoid getting the newline character, which can cause issues
-    for(int i = 7; i < strlen(cmd) - 1; i++) {
-        dev->dev[i - 7] = cmd[i];
-    }
+    dev->dev = realloc(dev->dev, strlen(cmd));
+    strcpy(dev->dev, cmd);
 
     printf(ANSI_COLOR_GREEN "\nConnecting to %s\n" ANSI_COLOR_RESET, dev->dev);
 
@@ -93,18 +111,11 @@ int ch_baud(serial_dev *dev, char *cmd) {
     int r = disconnect(dev);
     if (r < 0) return -1;
 
-    char *temp = malloc(strlen(cmd) - 7);
-    // we go up to strlen - 1 to avoid getting the newline character, which can cause issues
-    for(int i = 6; i < strlen(cmd) - 1; i++) {
-        temp[i - 6] = cmd[i];
-    }
-    dev->baud = strtol(temp, NULL, 10);
+    dev->baud = strtol(cmd, NULL, 10);
 
     printf(ANSI_COLOR_GREEN "\nSetting baudrate to %d...\n" ANSI_COLOR_RESET, dev->baud);
 
     dev->baud = parse_baud(dev->baud);
-
-    free(temp);
 
     dev->fd = initialize_serial(dev);
 
@@ -146,22 +157,14 @@ void ls_mode() {
 }
 
 int ch_mode(char *cmd) {
-    char *mode = malloc(strlen(cmd) - 6);
 
-    for(int i = 7; i < strlen(cmd); i++) {
-        mode[i - 7] = cmd[i];
-    }
-
-    if(!strncmp(mode, "ascii", 5)) {
-        free(mode);
+    if(!strncmp(cmd, "ascii", 5)) {
         printf(ANSI_COLOR_GREEN "\nNow in ASCII mode\n" ANSI_COLOR_RESET);
         return MODE_ASCII;
-    } else if(!strncmp(mode, "hex", 3)) {
-        free(mode);
+    } else if(!strncmp(cmd, "hex", 3)) {
         printf(ANSI_COLOR_GREEN "\nNow in HEX mode\n" ANSI_COLOR_RESET);
         return MODE_HEX;
-    } else if(!strncmp(mode, "file", 4)) {
-        free(mode);
+    } else if(!strncmp(cmd, "file", 4)) {
         printf(ANSI_COLOR_GREEN "\nNow in file mode\n" ANSI_COLOR_RESET);
         return MODE_FILE;
     }

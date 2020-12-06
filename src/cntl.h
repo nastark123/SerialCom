@@ -28,6 +28,7 @@
 
 int display_output(char *out, int len, int out_mode);
 unsigned int parse_cmd(char *cmd);
+int remove_cmd(char *cmd, int n);
 int disconnect(serial_dev *dev);
 int ch_dev(serial_dev *dev, char *cmd);
 int ch_baud(serial_dev *dev, char *cmd);
