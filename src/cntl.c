@@ -48,14 +48,14 @@ unsigned int parse_cmd(char *cmd) {
     } else if(!strncmp(cmd, "!chbd ", 6)) { // change the baudrate and reconnect
         remove_cmd(cmd, 6);
         return CHBAUD;
-    } else if(!strncmp(cmd, "!lscmd ", 7)) {
-        remove_cmd(cmd, 7);
-        return LSCMD;
-    } else if(!strncmp(cmd, "!lsbd ", 6)) {
+    } else if(!strncmp(cmd, "!lscmd", 6)) {
         remove_cmd(cmd, 6);
+        return LSCMD;
+    } else if(!strncmp(cmd, "!lsbd", 5)) {
+        remove_cmd(cmd, 5);
         return LSBD;
-    } else if(!strncmp(cmd, "!lsmode ", 8)) {
-        remove_cmd(cmd, 8);
+    } else if(!strncmp(cmd, "!lsmode", 7)) {
+        remove_cmd(cmd, 7);
         return LSMODE;
     } else if(!strncmp(cmd, "!imode ", 7)) {
         remove_cmd(cmd, 7);
