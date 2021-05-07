@@ -19,7 +19,7 @@ typedef struct serial_dev {
     int out_mode;
 } serial_dev;
 
-int initialize_serial(serial_dev *dev);
+int init_serial(serial_dev *dev);
 
 int parse_baud(long baud);
 

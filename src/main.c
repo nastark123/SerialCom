@@ -8,10 +8,8 @@
 #include "serial.h"
 #include "cntl.h"
 
-int main(int argc, char *argv[]) {
-
+void init(serial_dev *dev) {
     char *setup = malloc(256);
-    serial_dev *dev;
     dev = malloc(sizeof(serial_dev));
 
     printf(ANSI_COLOR_GREEN "Welcome to SerialCom!  What device would you like to connect to?\n" ANSI_COLOR_RESET);
@@ -23,7 +21,7 @@ int main(int argc, char *argv[]) {
     printf(ANSI_COLOR_GREEN "\nWhat baud rate would you like to use?\n" ANSI_COLOR_RESET);
     memset(setup, 0, 256);
     fgets(setup, 256, stdin);
-    long baud = strtol(argv[2], NULL, 10);
+    long baud = strtol(setup, NULL, 10);
     baud = parse_baud(baud);
     dev->baud = baud;
 
@@ -43,8 +41,15 @@ int main(int argc, char *argv[]) {
     dev->timeout = strtol(setup, NULL, 10);
 
     free(setup);
+}
 
-    initialize_serial(dev);
+int main(int argc, char *argv[]) {
+
+    serial_dev *dev;
+
+    init(dev);
+
+    init_serial(dev);
 
     if(dev->fd < 0) {
         printf(ANSI_COLOR_RED "Error %d while initializing: " ANSI_COLOR_RESET, errno);

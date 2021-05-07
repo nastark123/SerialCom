@@ -101,7 +101,7 @@ int ch_dev(serial_dev *dev, char *cmd) {
 
     printf(ANSI_COLOR_GREEN "\nConnecting to %s\n" ANSI_COLOR_RESET, dev->dev);
 
-    dev->fd = initialize_serial(dev);
+    dev->fd = init_serial(dev);
     if(dev->fd < 0) return -1;
 
     return 0;
@@ -117,7 +117,7 @@ int ch_baud(serial_dev *dev, char *cmd) {
 
     dev->baud = parse_baud(dev->baud);
 
-    dev->fd = initialize_serial(dev);
+    dev->fd = init_serial(dev);
 
     if(dev->fd < 0) return -1;
 

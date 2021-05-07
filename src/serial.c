@@ -14,7 +14,7 @@ int send_and_rec_data(serial_dev *dev, void *buff, int n) {
 // returns a file descriptor to the serial device if successful, or error code if not
 // dev is a string that is the path to the device, usually /dev/ttyX or /dev/ttyACMX
 // timeout is in .1's of a second and can range from 0 to 255, defaults to 10 if out of bounds
-int initialize_serial(serial_dev *dev) {
+int init_serial(serial_dev *dev) {
     dev->fd = open(dev->dev, O_RDWR | O_NOCTTY | O_SYNC);
     // printf("fd: %d\n", dev->fd);
     // printf("Past fd\n");
