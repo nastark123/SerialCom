@@ -10,3 +10,7 @@ clean:
 rebuild:
 	make clean
 	make build
+
+make install:
+	make build
+	mv serial /usr/bin/serialcom
