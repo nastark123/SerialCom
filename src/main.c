@@ -1,11 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <termios.h>
-#include <limits.h>
 #include "serial.h"
 #include "cntl.h"
 

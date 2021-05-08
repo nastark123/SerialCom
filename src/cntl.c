@@ -163,24 +163,6 @@ void ls_mode() {
 int ch_mode(char *cmd) {
 
     if(!strncmp(cmd, "ascii", 5)) {
-        printf(ANSI_COLOR_GREEN "\nNow in ASCII mode\n" ANSI_COLOR_RESET);
-        return MODE_ASCII;
-    } else if(!strncmp(cmd, "hex", 3)) {
-        printf(ANSI_COLOR_GREEN "\nNow in HEX mode\n" ANSI_COLOR_RESET);
-        return MODE_HEX;
-    } else if(!strncmp(cmd, "file", 4)) {
-        printf(ANSI_COLOR_GREEN "\nNow in file mode\n" ANSI_COLOR_RESET);
-        return MODE_FILE;
-    }
-
-    return MODE_UNKNOWN;
-
-}
-
-// yes i realize im repeating myself, will probably refactor later
-int init_mode(char *cmd) {
-
-    if(!strncmp(cmd, "ascii", 5)) {
         printf(ANSI_COLOR_GREEN "\nSet to ASCII mode\n" ANSI_COLOR_RESET);
         return MODE_ASCII;
     } else if(!strncmp(cmd, "hex", 3)) {
@@ -191,8 +173,8 @@ int init_mode(char *cmd) {
         return MODE_FILE;
     }
 
-    printf(ANSI_COLOR_RED "\nUnrecognized mode, starting in ASCII\n" ANSI_COLOR_RESET);
     return MODE_ASCII;
+
 }
 
 // converts the characters in str to hex byte values and stores them in str
