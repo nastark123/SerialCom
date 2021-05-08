@@ -9,10 +9,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <limits.h>
 
 typedef struct serial_dev {
     int fd;
-    char *dev;
+    char dev[PATH_MAX];
     int baud;
     int timeout;
     int in_mode;

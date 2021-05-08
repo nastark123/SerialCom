@@ -22,7 +22,10 @@ int display_output(char *out, int len, int out_mode) {
             file[strlen(file) - 1] = '\0';
 
             int f = open(file, O_RDWR);
-            if(f < 0) printf(ANSI_COLOR_RED "Error opening file\n" ANSI_COLOR_RESET);
+            if(f < 0) {
+                printf(ANSI_COLOR_RED "Error opening file\n" ANSI_COLOR_RESET);
+                return -1;
+            }
             write(f, out, len);
             close(f);
                     
@@ -35,6 +38,8 @@ int display_output(char *out, int len, int out_mode) {
             printf("Data: " ANSI_COLOR_RESET "%s\n", out);
             break;
     }
+
+    return 0;
 }
 
 unsigned int parse_cmd(char *cmd) {
@@ -96,8 +101,7 @@ int ch_dev(serial_dev *dev, char *cmd) {
         if (r < 0) return -1;
     }
 
-    dev->dev = realloc(dev->dev, strlen(cmd));
-    strcpy(dev->dev, cmd);
+    strncpy(dev->dev, cmd, PATH_MAX);
 
     printf(ANSI_COLOR_GREEN "\nConnecting to %s\n" ANSI_COLOR_RESET, dev->dev);
 
@@ -169,6 +173,8 @@ int ch_mode(char *cmd) {
         return MODE_FILE;
     }
 
+    return MODE_UNKNOWN;
+
 }
 
 // yes i realize im repeating myself, will probably refactor later
@@ -209,4 +215,76 @@ int parse_hex(char *str) {
     free(tmp);
 
     return i;
+}
+
+void print_help() {
+    printf(ANSI_COLOR_GREEN "Possible options when running program:\n");
+    printf("-h : display this and exit\n");
+    printf("-d : path to serial device, if not provided will be asked for at startup\n");
+    printf("-b : baud rate to use, default is 9600\n" ANSI_COLOR_RESET);
+    ls_bd();
+    printf(ANSI_COLOR_GREEN "-om : output mode for data read from serial device, must be either ascii, hex, or file, default is ascii\n");
+    printf("-im : input mode for data to send to serial device, must be either ascii, hex, or file, default is ascii\n");
+    printf("-t : specify a timeout in 0.1's of a second to wait for a response from the serial device before returning, default is 1.0s\n" ANSI_COLOR_RESET);
+}
+
+int parse_opts(serial_dev *dev, char **args, int len) {
+
+    char *cur_arg;
+    for(int i = 1; i < len; i++) {
+        cur_arg = args[i];
+        if(!strncmp(cur_arg, "-h", 2)) {
+            print_help();
+            return -1;
+        } else if(!strncmp(cur_arg, "-d", 2)) {
+            if(++i < len) {
+                strncpy(dev->dev, args[i], PATH_MAX);
+                cur_arg = NULL;
+            } else {
+                break;
+            }
+        } else if(!strncmp(cur_arg, "-b", 2)) {
+            if(++i < len) {
+                long baud = strtol(args[i], NULL, 10);
+                dev->baud = parse_baud(baud);
+                cur_arg = NULL;
+            } else {
+                break;
+            }
+        } else if(!strncmp(cur_arg, "-om", 3)) {
+            if(++i < len) {
+                dev->out_mode = ch_mode(args[i]);
+                if(dev->out_mode == MODE_UNKNOWN) {
+                    printf("Unrecognized output mode specified\n");
+                    break;
+                }
+                cur_arg = NULL;
+            } else {
+                break;
+            }
+        } else if(!strncmp(cur_arg, "-im", 3)) {
+            if(++i < len) {
+                dev->in_mode = ch_mode(args[i]);
+                if(dev->in_mode == MODE_UNKNOWN) {
+                    printf("Unrecognized output mode specified\n");
+                    break;
+                }
+                cur_arg = NULL;
+            } else {
+                break;
+            }
+        } else if(!strncmp(cur_arg, "-t", 2)) {
+            if(++i < len) {
+                dev->timeout = strtol(args[i], NULL, 10);
+                cur_arg = NULL;
+            } else {
+                break;
+            }
+        }
+    }
+
+    if(cur_arg != NULL) {
+        printf(ANSI_COLOR_RED "Missing data for argument %s\n" ANSI_COLOR_RESET, cur_arg);
+        return -1;
+    }
 }

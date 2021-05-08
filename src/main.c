@@ -5,59 +5,46 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
+#include <limits.h>
 #include "serial.h"
 #include "cntl.h"
 
-void init(serial_dev *dev) {
-    char *setup = malloc(256);
-    dev = malloc(sizeof(serial_dev));
-
-    printf(ANSI_COLOR_GREEN "Welcome to SerialCom!  What device would you like to connect to?\n" ANSI_COLOR_RESET);
-    fgets(setup, 256, stdin);
-    setup[strlen(setup) - 1] = '\0';
-    dev->dev = malloc(strlen(setup));
-    strcpy(dev->dev, setup);
-
-    printf(ANSI_COLOR_GREEN "\nWhat baud rate would you like to use?\n" ANSI_COLOR_RESET);
-    memset(setup, 0, 256);
-    fgets(setup, 256, stdin);
-    long baud = strtol(setup, NULL, 10);
-    baud = parse_baud(baud);
-    dev->baud = baud;
-
-    printf(ANSI_COLOR_GREEN "\nWhat would you like as your starting input mode (ascii, hex, or file)?\n" ANSI_COLOR_RESET);
-    memset(setup, 0, 256);
-    fgets(setup, 256, stdin);
-    dev->in_mode = init_mode(setup);
-
-    printf(ANSI_COLOR_GREEN "\nWhat would you like as your starting output mode (ascii, hex, or file)?\n" ANSI_COLOR_RESET);
-    memset(setup, 0, 256);
-    fgets(setup, 256, stdin);
-    dev->out_mode = init_mode(setup);
-
-    printf(ANSI_COLOR_GREEN "\nWhat would you like the timeout to be (in 0.1's of a second):\n" ANSI_COLOR_RESET);
-    memset(setup, 0, 256);
-    fgets(setup, 256, stdin);
-    dev->timeout = strtol(setup, NULL, 10);
-
-    free(setup);
-}
-
 int main(int argc, char *argv[]) {
 
-    serial_dev *dev;
+    serial_dev *dev = malloc(sizeof(serial_dev));
+    memset(dev, 0, sizeof(serial_dev));
 
-    init(dev);
+    if(argc > 1) {
+        if(parse_opts(dev, argv, argc) < 0) return 0;
+    }
+
+    char *buff = malloc(PATH_MAX);
+    memset(buff, 0, PATH_MAX);
+
+    if(strlen(dev->dev) == 0) {
+        printf(ANSI_COLOR_GREEN "You have not specified a device to connect to.  Please input one now:\n" ANSI_COLOR_RESET);
+        fgets(buff, PATH_MAX, stdin);
+        buff[strlen(buff) - 1] = '\0';
+        strncpy(dev->dev, buff, PATH_MAX);
+    }
+
+    if(dev->baud == 0) dev->baud = B9600;
+
+    if(dev->timeout == 0) dev->timeout = 10;
+
+    if(dev->in_mode == 0) dev->in_mode = MODE_ASCII;
+
+    if(dev->out_mode == 0)  dev->out_mode = MODE_ASCII;
 
     init_serial(dev);
 
     if(dev->fd < 0) {
         printf(ANSI_COLOR_RED "Error %d while initializing: " ANSI_COLOR_RESET, errno);
         printf(ANSI_COLOR_RED "%s\n", strerror(errno));
+        return 0;
     } else {
         printf(ANSI_COLOR_GREEN "Device opened and initialized\n" ANSI_COLOR_RESET);
     }
-    char *buff = malloc(256);
     
     for(;;) {
         memset(buff, 0, 256);

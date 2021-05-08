@@ -14,9 +14,10 @@
 #define IMODE 7
 #define OMODE 8
 
-#define MODE_ASCII 0
-#define MODE_HEX 1
-#define MODE_FILE 2
+#define MODE_UNKNOWN -1
+#define MODE_ASCII 1
+#define MODE_HEX 2
+#define MODE_FILE 3
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -38,5 +39,7 @@ void ls_mode();
 int ch_mode(char *cmd);
 int init_mode(char *cmd);
 int parse_hex(char *str);
+void print_help();
+int parse_opts(serial_dev *dev, char **args, int len);
 
 #endif
