@@ -62,13 +62,14 @@ int main(int argc, char *argv[]) {
 
                 if(dev->rw_flag & WRITE_ONLY) {
                     bytes_out = write_data(dev, buff, bytes_out);
+
+                    printf(ANSI_COLOR_GREEN "\nWrote %d bytes to the device\n" ANSI_COLOR_RESET, bytes_out);
                 }
 
                 if(dev->rw_flag & READ_ONLY) {
                     bytes_in = read_data(dev, buff, bytes_in);
+                    display_output(buff, bytes_in, dev->out_mode);
                 }
-                
-                display_output(buff, bytes_in, dev->out_mode);
 
                 // not sure if this is necessary, but if memcpy resizes I think it is
                 buff = realloc(buff, 256);
