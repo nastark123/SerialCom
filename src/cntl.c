@@ -68,6 +68,12 @@ unsigned int parse_cmd(char *cmd) {
     } else if(!strncmp(cmd, "!omode ", 7)) {
         remove_cmd(cmd, 7);
         return OMODE;
+    } else if(!strncmp(cmd, "!togread ", 9)) {
+        remove_cmd(cmd, 8);
+        return CHREAD;
+    } else if(!strncmp(cmd, "!togwrite ", 10)) {
+        remove_cmd(cmd, 9);
+        return CHWRITE;
     }
 
     return NOTHING;
@@ -137,7 +143,9 @@ void ls_cmd(){
     printf("omode - change the mode to one of the supported input modes\n");
     printf("lscmd - list all commands\n");
     printf("lsbd - list all the supported baud rates compiled into this executable\n");
-    printf("lsmode - lists all supported modes (ascii, hex, etc.)\n" ANSI_COLOR_RESET);
+    printf("lsmode - lists all supported modes (ascii, hex, etc.)\n");
+    printf("togread - toggles reading for the serial port\n");
+    printf("togwrite - toggles writing for the serial port\n");
 }
 
 void ls_bd() {
@@ -207,9 +215,14 @@ void print_help() {
     ls_bd();
     printf(ANSI_COLOR_GREEN "-om : output mode for data read from serial device, must be either ascii, hex, or file, default is ascii\n");
     printf("-im : input mode for data to send to serial device, must be either ascii, hex, or file, default is ascii\n");
-    printf("-t : specify a timeout in 0.1's of a second to wait for a response from the serial device before returning, default is 1.0s\n" ANSI_COLOR_RESET);
+    printf("-t : specify a timeout in 0.1's of a second to wait for a response from the serial device before returning, default is 1.0s\n");
+    printf("-r : enable reading from the serial port, if specified with -w, will read after the data is written\n");
+    printf("-w : enable writing to the serial port, if specified with -r, the write will occur and then data will be read back\n");
+    printf("-nr : disable reading from the serial port\n");
+    printf("-nw : disable writing to the serial ports\n" ANSI_COLOR_RESET);
 }
 
+// TODO refactor this, it seems really clunky and bad
 int parse_opts(serial_dev *dev, char **args, int len) {
 
     char *cur_arg;
@@ -262,6 +275,21 @@ int parse_opts(serial_dev *dev, char **args, int len) {
             } else {
                 break;
             }
+        } else if(!strncmp(cur_arg, "-r", 2)) {
+            dev->rw_flag |= READ_ONLY;
+            cur_arg = NULL;
+        } else if(!strncmp(cur_arg, "-w", 2)) {
+            dev->rw_flag |= WRITE_ONLY;
+            cur_arg = NULL;
+        } else if(!strncmp(cur_arg, "-nr", 3)) {
+            dev->rw_flag &= ~READ_ONLY;
+            cur_arg = NULL;
+        } else if(!strncmp(cur_arg, "-nw", 3)) {
+            dev->rw_flag &= ~WRITE_ONLY;
+            cur_arg = NULL;
+        } else {
+            printf(ANSI_COLOR_RED "Unrecognized option %s\n" ANSI_COLOR_RESET, cur_arg);
+            return -1;
         }
     }
 

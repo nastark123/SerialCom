@@ -11,6 +11,15 @@
 #include <string.h>
 #include <limits.h>
 
+#define READ_ONLY 0x01
+#define WRITE_ONLY 0x02
+#define READ_WRITE 0x03
+
+#define MODE_UNKNOWN -1
+#define MODE_ASCII 1
+#define MODE_HEX 2
+#define MODE_FILE 3
+
 typedef struct serial_dev {
     int fd;
     char dev[PATH_MAX];
@@ -18,6 +27,7 @@ typedef struct serial_dev {
     int timeout;
     int in_mode;
     int out_mode;
+    unsigned char rw_flag;
 } serial_dev;
 
 int init_serial(serial_dev *dev);
@@ -25,5 +35,11 @@ int init_serial(serial_dev *dev);
 int parse_baud(long baud);
 
 int send_and_rec_data(serial_dev *dev, void *buff, int n);
+
+void serial_dev_make_default(serial_dev *dev);
+
+int write_data(serial_dev *dev, void *buff, int n);
+
+int read_data(serial_dev *dev, void *buff, int n);
 
 #endif

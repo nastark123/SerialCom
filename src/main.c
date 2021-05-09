@@ -3,8 +3,10 @@
 
 int main(int argc, char *argv[]) {
 
-    serial_dev *dev = malloc(sizeof(serial_dev));
-    memset(dev, 0, sizeof(serial_dev));
+    serial_dev *dev;
+    dev = malloc(sizeof(serial_dev));
+    if(dev == NULL) return 0;
+    serial_dev_make_default(dev);
 
     if(argc > 1) {
         if(parse_opts(dev, argv, argc) < 0) return 0;
@@ -20,14 +22,6 @@ int main(int argc, char *argv[]) {
         strncpy(dev->dev, buff, PATH_MAX);
     }
 
-    if(dev->baud == 0) dev->baud = B9600;
-
-    if(dev->timeout == 0) dev->timeout = 10;
-
-    if(dev->in_mode == 0) dev->in_mode = MODE_ASCII;
-
-    if(dev->out_mode == 0)  dev->out_mode = MODE_ASCII;
-
     init_serial(dev);
 
     if(dev->fd < 0) {
@@ -41,10 +35,12 @@ int main(int argc, char *argv[]) {
     for(;;) {
         memset(buff, 0, 256);
 
-        printf(ANSI_COLOR_GREEN "\nInput a string to send to the device (max 255 characters) or input a command:\n" ANSI_COLOR_RESET);
+        printf(ANSI_COLOR_GREEN "\nInput a string to send to the device (max 255 characters) or input a command (if in read only, just hit enter, or type a command if you wish):\n" ANSI_COLOR_RESET);
         fgets(buff, 256, stdin);
 
         int n = 0;
+        int bytes_out = 0;
+        int bytes_in = 256;
 
         switch(parse_cmd(buff)) {
             case NOTHING:
@@ -52,19 +48,27 @@ int main(int argc, char *argv[]) {
                 buff[strlen(buff) - 1] = '\0';
 
                 if(dev->in_mode == MODE_HEX) {
-                    n = parse_hex(buff);
+                    bytes_out = parse_hex(buff);
                 } else if(dev->in_mode == MODE_FILE) {
                     int f = open(buff, O_RDONLY);
                     if(f < 0) printf(ANSI_COLOR_RED "\nError opening file\n" ANSI_COLOR_RESET);
-                    n = read(f, buff, 256);
+                    bytes_out = read(f, buff, 256);
                     close(f);
                 } else {
-                    n = strlen(buff);
+                    bytes_out = strlen(buff);
                 }
 
-                n = send_and_rec_data(dev, buff, n);
+                // n = send_and_rec_data(dev, buff, n);
+
+                if(dev->rw_flag & WRITE_ONLY) {
+                    bytes_out = write_data(dev, buff, bytes_out);
+                }
+
+                if(dev->rw_flag & READ_ONLY) {
+                    bytes_in = read_data(dev, buff, bytes_in);
+                }
                 
-                display_output(buff, n, dev->out_mode);
+                display_output(buff, bytes_in, dev->out_mode);
 
                 // not sure if this is necessary, but if memcpy resizes I think it is
                 buff = realloc(buff, 256);
@@ -113,6 +117,14 @@ int main(int argc, char *argv[]) {
 
             case OMODE:
                 dev->out_mode = ch_mode(buff);
+                break;
+
+            case CHREAD:
+                dev->rw_flag ^= READ_ONLY;
+                break;
+
+            case CHWRITE:
+                dev->rw_flag ^=WRITE_ONLY;
                 break;
 
             default:

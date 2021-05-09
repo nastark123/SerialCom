@@ -1,14 +1,39 @@
 #include "serial.h"
 
+// initializes a serial_dev struct to its default values
+void serial_dev_make_default(serial_dev *dev) {
+    memset(dev, 0, sizeof(serial_dev));
+    dev->baud = B9600;
+    dev->fd = -1;
+    dev->timeout = 10;
+    dev->in_mode = MODE_ASCII;
+    dev->out_mode = MODE_ASCII;
+    dev->rw_flag |= READ_ONLY;
+}
+
 // sends the data pointed to by buff and reads the response back into buff
 // returns the number of bytes read
 int send_and_rec_data(serial_dev *dev, void *buff, int n) {
 
     write(dev->fd, buff, n);
 
-    memset(buff, 0, 256);
+    memset(buff, 0, n);
 
-    return read(dev->fd, buff, 256);
+    return read(dev->fd, buff, n);
+}
+
+// not sure if this function is necessary but it keeps the general structure of the program
+// just writes data to the serial device and returns the bytes written
+int write_data(serial_dev *dev, void *buff, int n) {
+    return write(dev->fd, buff, n);
+}
+
+// reads up to n bytes from the serial device into the memory pointed to by buff
+// returns the number of bytes written
+int read_data(serial_dev *dev, void *buff, int n) {
+    memset(buff, 0, n);
+
+    return read(dev->fd, buff, n);
 }
 
 // returns a file descriptor to the serial device if successful, or error code if not
@@ -16,8 +41,6 @@ int send_and_rec_data(serial_dev *dev, void *buff, int n) {
 // timeout is in .1's of a second and can range from 0 to 255, defaults to 10 if out of bounds
 int init_serial(serial_dev *dev) {
     dev->fd = open(dev->dev, O_RDWR | O_NOCTTY | O_SYNC);
-    // printf("fd: %d\n", dev->fd);
-    // printf("Past fd\n");
 
     if(dev->fd < 0) return -1;
 
@@ -25,20 +48,16 @@ int init_serial(serial_dev *dev) {
     t = malloc(sizeof(struct termios));
 
     if(tcgetattr(dev->fd, t) != 0) return -1;
-    // printf("Past tcgetattr\n");
 
     cfmakeraw(t);
-    // printf("Past cfmakeraw\n");
 
     t->c_cc[VMIN] = 0;
     t->c_cc[VTIME] = (dev->timeout < 255) ? dev->timeout : 10;
 
     cfsetispeed(t, dev->baud);
     cfsetospeed(t, dev->baud);
-    // printf("Past setting speeds\n");
 
     if(tcsetattr(dev->fd, TCSANOW, t) != 0) return -1;
-    // printf("Past tcsetattr\n");
 
     free(t);
 
