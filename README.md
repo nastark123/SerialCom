@@ -10,10 +10,10 @@ Other options include:<br>
 `-im` - specify which input mode should be used, can be ascii, hex, or file<br>
 `-t` - specify a timeout for reading response data from the serial port, in 0.1's of a second<br>
 `-h` - show the help menu<br>
-`-r` - enable reading from the serial port, if specified with `-w`, the read will occur after the write
-`-w` - enable writing to the serial port
-`-nr` - disable reading from the serial port
-`-nw` - disable writing to the serial port
+`-r` - enable reading from the serial port, if specified with `-w`, the read will occur after the write<br>
+`-w` - enable writing to the serial port<br>
+`-nr` - disable reading from the serial port<br>
+`-nw` - disable writing to the serial port<br>
 <br>
 <br>
 While running the program, you can also input commands to change various settings:<br>
@@ -24,3 +24,5 @@ While running the program, you can also input commands to change various setting
 `!omode` - change the output mode, can be ascii, hex, or file<br>
 `!lscmd` - list all commands<br>
 `!lsbd` - list all supported baud rates on this executable<br>
+`!togread` - toggle reading from the serial port<br>
+`!togwrite` - toggle writing to the serial port<br>
