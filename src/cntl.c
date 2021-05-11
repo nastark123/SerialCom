@@ -1,5 +1,14 @@
 #include "cntl.h"
 
+// put command strings here, any that need arguments passed after them need a space following the command string
+char *cmds[] = {"!dc", "!chdev ", "!chbd ", "!lscmd", "lsbd", "!lsmode", "!imode ", "!omode ", "!togread", "!togwrite"};
+
+// put program flags here
+// flags that do not require an argument to be passed with them
+char *flags_no_arg[] = {"-h", "-r", "-w", "-nr", "-nw"};
+// flags that do require an argument to be passed with them
+char *flags_w_arg[] = {"-d", "-b", "-om", "-im", "-t"};
+
 int display_output(char *out, int len, int out_mode) {
     switch(out_mode) {
         case MODE_ASCII:
@@ -21,7 +30,7 @@ int display_output(char *out, int len, int out_mode) {
             fgets(file, 256, stdin);
             file[strlen(file) - 1] = '\0';
 
-            int f = open(file, O_RDWR);
+            int f = open(file, O_APPEND);
             if(f < 0) {
                 printf(ANSI_COLOR_RED "Error opening file\n" ANSI_COLOR_RESET);
                 return -1;
@@ -44,36 +53,11 @@ int display_output(char *out, int len, int out_mode) {
 
 unsigned int parse_cmd(char *cmd) {
 
-    if(!strncmp(cmd, "!dc", 3)) { // disconnect from the device
-        remove_cmd(cmd, 3);
-        return DISCONNECT;
-    } else if(!strncmp(cmd, "!chdev ", 7)) { // change the device we're connected to
-        remove_cmd(cmd, 7);
-        return CHDEVICE;
-    } else if(!strncmp(cmd, "!chbd ", 6)) { // change the baudrate and reconnect
-        remove_cmd(cmd, 6);
-        return CHBAUD;
-    } else if(!strncmp(cmd, "!lscmd", 6)) {
-        remove_cmd(cmd, 6);
-        return LSCMD;
-    } else if(!strncmp(cmd, "!lsbd", 5)) {
-        remove_cmd(cmd, 5);
-        return LSBD;
-    } else if(!strncmp(cmd, "!lsmode", 7)) {
-        remove_cmd(cmd, 7);
-        return LSMODE;
-    } else if(!strncmp(cmd, "!imode ", 7)) {
-        remove_cmd(cmd, 7);
-        return IMODE;
-    } else if(!strncmp(cmd, "!omode ", 7)) {
-        remove_cmd(cmd, 7);
-        return OMODE;
-    } else if(!strncmp(cmd, "!togread ", 9)) {
-        remove_cmd(cmd, 8);
-        return CHREAD;
-    } else if(!strncmp(cmd, "!togwrite ", 10)) {
-        remove_cmd(cmd, 9);
-        return CHWRITE;
+    for(int i = 0; i < CMD_LENGTH; i++) {
+        if(!strncmp(cmd, cmds[i], strlen(cmds[i]))) {
+            remove_cmd(cmd, strlen(cmds[i]));
+            return i + 1;
+        }
     }
 
     return NOTHING;
@@ -181,6 +165,7 @@ int ch_mode(char *cmd) {
         return MODE_FILE;
     }
 
+    printf(ANSI_COLOR_RED "\nUnrecognized mode, using ASCII\n" ANSI_COLOR_RESET);
     return MODE_ASCII;
 
 }
@@ -222,79 +207,75 @@ void print_help() {
     printf("-nw : disable writing to the serial ports\n" ANSI_COLOR_RESET);
 }
 
-// TODO refactor this, it seems really clunky and bad
-int parse_opts(serial_dev *dev, char **args, int len) {
+int parse_flags(serial_dev *dev, char **args, int len) {
 
-    char *cur_arg;
     for(int i = 1; i < len; i++) {
-        cur_arg = args[i];
-        if(!strncmp(cur_arg, "-h", 2)) {
-            print_help();
-            return -1;
-        } else if(!strncmp(cur_arg, "-d", 2)) {
-            if(++i < len) {
-                strncpy(dev->dev, args[i], PATH_MAX);
-                cur_arg = NULL;
-            } else {
-                break;
-            }
-        } else if(!strncmp(cur_arg, "-b", 2)) {
-            if(++i < len) {
-                long baud = strtol(args[i], NULL, 10);
-                dev->baud = parse_baud(baud);
-                cur_arg = NULL;
-            } else {
-                break;
-            }
-        } else if(!strncmp(cur_arg, "-om", 3)) {
-            if(++i < len) {
-                dev->out_mode = ch_mode(args[i]);
-                if(dev->out_mode == MODE_UNKNOWN) {
-                    printf("Unrecognized output mode specified\n");
-                    break;
-                }
-                cur_arg = NULL;
-            } else {
-                break;
-            }
-        } else if(!strncmp(cur_arg, "-im", 3)) {
-            if(++i < len) {
-                dev->in_mode = ch_mode(args[i]);
-                if(dev->in_mode == MODE_UNKNOWN) {
-                    printf("Unrecognized output mode specified\n");
-                    break;
-                }
-                cur_arg = NULL;
-            } else {
-                break;
-            }
-        } else if(!strncmp(cur_arg, "-t", 2)) {
-            if(++i < len) {
-                dev->timeout = strtol(args[i], NULL, 10);
-                cur_arg = NULL;
-            } else {
-                break;
-            }
-        } else if(!strncmp(cur_arg, "-r", 2)) {
-            dev->rw_flag |= READ_ONLY;
-            cur_arg = NULL;
-        } else if(!strncmp(cur_arg, "-w", 2)) {
-            dev->rw_flag |= WRITE_ONLY;
-            cur_arg = NULL;
-        } else if(!strncmp(cur_arg, "-nr", 3)) {
-            dev->rw_flag &= ~READ_ONLY;
-            cur_arg = NULL;
-        } else if(!strncmp(cur_arg, "-nw", 3)) {
-            dev->rw_flag &= ~WRITE_ONLY;
-            cur_arg = NULL;
-        } else {
-            printf(ANSI_COLOR_RED "Unrecognized option %s\n" ANSI_COLOR_RESET, cur_arg);
-            return -1;
-        }
-    }
+        for(int j = 0; j < FLAGS_NO_ARG_LENGTH; j++) {
+            if(!strcmp(args[i], flags_no_arg[j])) {
+                switch(j + 1) {
+                    case HELP:
+                        print_help();
+                        return -1;
+                        break;
 
-    if(cur_arg != NULL) {
-        printf(ANSI_COLOR_RED "Missing data for argument %s\n" ANSI_COLOR_RESET, cur_arg);
-        return -1;
+                    case READ:
+                        dev->rw_flag |= READ_ONLY;
+                        break;
+
+                    case NO_READ:
+                        dev->rw_flag &= ~READ_ONLY;
+                        break;
+
+                    case WRITE:
+                        dev->rw_flag |= WRITE_ONLY;
+                        break;
+
+                    case NO_WRITE:
+                        dev->rw_flag &= WRITE_ONLY;
+                        break;
+
+                    default:
+                        // not sure how this code would be reached, but I put it in anyways to feel better
+                        break;
+                }
+            }
+        }
+
+        for(int k = 0; k < FLAGS_W_ARG_LENGTH; k++) {
+            if(!strcmp(args[i], flags_w_arg[k])) {
+                
+                if(++i >= len) {
+                    printf(ANSI_COLOR_RED "Missing data for argument %s\n" ANSI_COLOR_RESET, flags_w_arg[k]);
+                    return -1;
+                }
+
+                long baud = 0;
+                switch(k + 1) {
+                    case DEVICE:
+                        strncpy(dev->dev, args[i], PATH_MAX);
+                        break;
+
+                    case BAUD:
+                        baud = strtol(args[i], NULL, 10);
+                        dev->baud = parse_baud(baud);
+                        break;
+
+                    case OUT_MODE:
+                        dev->out_mode = ch_mode(args[i]);
+                        break;
+
+                    case IN_MODE:
+                        dev->in_mode = ch_mode(args[i]);
+                        break;
+
+                    case TIMEOUT:
+                        dev->timeout = strtol(args[i], NULL, 10);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+        }
     }
 }

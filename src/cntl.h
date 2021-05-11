@@ -4,6 +4,18 @@
 
 #include "serial.h"
 
+// array to hold the recognized commands, parse_cmd will return the index of the command passed to it
+extern char *cmds[];
+
+// arrays to hold recognized flags that can be passed to the program when it is first started
+extern char *flags_no_arg[];
+extern char *flags_w_arg[];
+
+// array length definitions for convenience
+#define CMD_LENGTH 10
+#define FLAGS_NO_ARG_LENGTH 5
+#define FLAGS_W_ARG_LENGTH 5
+
 #define NOTHING 0
 #define DISCONNECT 1
 #define CHDEVICE 2
@@ -15,6 +27,18 @@
 #define OMODE 8
 #define CHREAD 9
 #define CHWRITE 10
+
+#define HELP 1
+#define READ 2
+#define WRITE 3
+#define NO_READ 4
+#define NO_WRITE 5
+
+#define DEVICE 1
+#define BAUD 2
+#define OUT_MODE 3
+#define IN_MODE 4
+#define TIMEOUT 5
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -48,6 +72,6 @@ int parse_hex(char *str);
 
 void print_help();
 
-int parse_opts(serial_dev *dev, char **args, int len);
+int parse_flags(serial_dev *dev, char **args, int len);
 
 #endif

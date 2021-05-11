@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     serial_dev_make_default(dev);
 
     if(argc > 1) {
-        if(parse_opts(dev, argv, argc) < 0) return 0;
+        if(parse_flags(dev, argv, argc) < 0) return 0;
     }
 
     char *buff = malloc(PATH_MAX);
