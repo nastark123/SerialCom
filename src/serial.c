@@ -8,7 +8,7 @@ void serial_dev_make_default(serial_dev *dev) {
     dev->timeout = 10;
     dev->in_mode = MODE_ASCII;
     dev->out_mode = MODE_ASCII;
-    dev->rw_flag |= READ_ONLY;
+    dev->rw_flag |= READ_SERIAL;
 }
 
 // sends the data pointed to by buff and reads the response back into buff

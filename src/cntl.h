@@ -11,10 +11,18 @@ extern char *cmds[];
 extern char *flags_no_arg[];
 extern char *flags_w_arg[];
 
+// default size for buffer
+#define DEFAULT_BUFF_SIZE 256
+
+// buffer for writing to and reading from the serial device
+extern int buff_size;
+
+extern char *buff;
+
 // array length definitions for convenience
 #define CMD_LENGTH 10
-#define FLAGS_NO_ARG_LENGTH 5
-#define FLAGS_W_ARG_LENGTH 5
+#define FLAGS_NO_ARG_LENGTH 6
+#define FLAGS_W_ARG_LENGTH 6
 
 #define NOTHING 0
 #define DISCONNECT 1
@@ -33,12 +41,14 @@ extern char *flags_w_arg[];
 #define WRITE 3
 #define NO_READ 4
 #define NO_WRITE 5
+#define MONITOR 6
 
 #define DEVICE 1
 #define BAUD 2
 #define OUT_MODE 3
 #define IN_MODE 4
 #define TIMEOUT 5
+#define BUFFER_SIZE 6
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"

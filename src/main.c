@@ -12,35 +12,38 @@ int main(int argc, char *argv[]) {
         if(parse_flags(dev, argv, argc) < 0) return 0;
     }
 
-    char *buff = malloc(PATH_MAX);
-    memset(buff, 0, PATH_MAX);
+    buff = malloc(buff_size);
+    memset(buff, 0, buff_size);
 
     if(strlen(dev->dev) == 0) {
         printf(ANSI_COLOR_GREEN "You have not specified a device to connect to.  Please input one now:\n" ANSI_COLOR_RESET);
-        fgets(buff, PATH_MAX, stdin);
+        fgets(buff, buff_size, stdin);
         buff[strlen(buff) - 1] = '\0';
-        strncpy(dev->dev, buff, PATH_MAX);
+        strncpy(dev->dev, buff, buff_size);
     }
 
     init_serial(dev);
 
     if(dev->fd < 0) {
         printf(ANSI_COLOR_RED "Error %d while initializing: " ANSI_COLOR_RESET, errno);
-        printf(ANSI_COLOR_RED "%s\n", strerror(errno));
+        printf(ANSI_COLOR_RED "%s\n" ANSI_COLOR_RESET, strerror(errno));
         return 0;
     } else {
         printf(ANSI_COLOR_GREEN "Device opened and initialized\n" ANSI_COLOR_RESET);
     }
     
     for(;;) {
-        memset(buff, 0, 256);
+        
+        memset(buff, 0, buff_size);
 
-        printf(ANSI_COLOR_GREEN "\nInput a string to send to the device (max 255 characters) or input a command (if in read only, just hit enter, or type a command if you wish):\n" ANSI_COLOR_RESET);
-        fgets(buff, 256, stdin);
+        if(!(dev->rw_flag & MONITOR_SERIAL)) {
+            printf(ANSI_COLOR_GREEN "\nInput a string to send to the device (max 255 characters) or input a command (if in read only, just hit enter, or type a command if you wish):\n" ANSI_COLOR_RESET);
+            fgets(buff, buff_size, stdin);
+        }
 
         int n = 0;
         int bytes_out = 0;
-        int bytes_in = 256;
+        int bytes_in = buff_size;
 
         switch(parse_cmd(buff)) {
             case NOTHING:
@@ -52,7 +55,7 @@ int main(int argc, char *argv[]) {
                 } else if(dev->in_mode == MODE_FILE) {
                     int f = open(buff, O_RDONLY);
                     if(f < 0) printf(ANSI_COLOR_RED "\nError opening file\n" ANSI_COLOR_RESET);
-                    bytes_out = read(f, buff, 256);
+                    bytes_out = read(f, buff, buff_size);
                     close(f);
                 } else {
                     bytes_out = strlen(buff);
@@ -60,19 +63,19 @@ int main(int argc, char *argv[]) {
 
                 // n = send_and_rec_data(dev, buff, n);
 
-                if(dev->rw_flag & WRITE_ONLY) {
+                if(dev->rw_flag & WRITE_SERIAL) {
                     bytes_out = write_data(dev, buff, bytes_out);
 
                     printf(ANSI_COLOR_GREEN "\nWrote %d bytes to the device\n" ANSI_COLOR_RESET, bytes_out);
                 }
 
-                if(dev->rw_flag & READ_ONLY) {
+                if(dev->rw_flag & READ_SERIAL) {
                     bytes_in = read_data(dev, buff, bytes_in);
                     display_output(buff, bytes_in, dev->out_mode);
                 }
 
                 // not sure if this is necessary, but if memcpy resizes I think it is
-                buff = realloc(buff, 256);
+                buff = realloc(buff, buff_size);
 
                 break;
 
@@ -121,11 +124,11 @@ int main(int argc, char *argv[]) {
                 break;
 
             case CHREAD:
-                dev->rw_flag ^= READ_ONLY;
+                dev->rw_flag ^= READ_SERIAL;
                 break;
 
             case CHWRITE:
-                dev->rw_flag ^=WRITE_ONLY;
+                dev->rw_flag ^=WRITE_SERIAL;
                 break;
 
             default:

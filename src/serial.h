@@ -11,9 +11,9 @@
 #include <string.h>
 #include <limits.h>
 
-#define READ_ONLY 0x01
-#define WRITE_ONLY 0x02
-#define READ_WRITE 0x03
+#define READ_SERIAL 0x01
+#define WRITE_SERIAL 0x02
+#define MONITOR_SERIAL 0x04
 
 #define MODE_UNKNOWN -1
 #define MODE_ASCII 1

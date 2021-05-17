@@ -5,9 +5,14 @@ char *cmds[] = {"!dc", "!chdev ", "!chbd ", "!lscmd", "lsbd", "!lsmode", "!imode
 
 // put program flags here
 // flags that do not require an argument to be passed with them
-char *flags_no_arg[] = {"-h", "-r", "-w", "-nr", "-nw"};
+char *flags_no_arg[] = {"-h", "-r", "-w", "-nr", "-nw",  "-m"};
 // flags that do require an argument to be passed with them
-char *flags_w_arg[] = {"-d", "-b", "-om", "-im", "-t"};
+char *flags_w_arg[] = {"-d", "-b", "-om", "-im", "-t", "-bs"};
+
+// size for the transmit and receive buffer
+int buff_size = DEFAULT_BUFF_SIZE;
+
+char *buff;
 
 int display_output(char *out, int len, int out_mode) {
     switch(out_mode) {
@@ -204,7 +209,8 @@ void print_help() {
     printf("-r : enable reading from the serial port, if specified with -w, will read after the data is written\n");
     printf("-w : enable writing to the serial port, if specified with -r, the write will occur and then data will be read back\n");
     printf("-nr : disable reading from the serial port\n");
-    printf("-nw : disable writing to the serial ports\n" ANSI_COLOR_RESET);
+    printf("-nw : disable writing to the serial ports\n");
+    printf("-bs : change the buffer size (in bytes) used to write to and read from the serial device\n" ANSI_COLOR_RESET);
 }
 
 int parse_flags(serial_dev *dev, char **args, int len) {
@@ -219,21 +225,23 @@ int parse_flags(serial_dev *dev, char **args, int len) {
                         break;
 
                     case READ:
-                        dev->rw_flag |= READ_ONLY;
+                        dev->rw_flag |= READ_SERIAL;
                         break;
 
                     case NO_READ:
-                        dev->rw_flag &= ~READ_ONLY;
+                        dev->rw_flag &= ~READ_SERIAL;
                         break;
 
                     case WRITE:
-                        dev->rw_flag |= WRITE_ONLY;
+                        dev->rw_flag |= WRITE_SERIAL;
                         break;
 
                     case NO_WRITE:
-                        dev->rw_flag &= WRITE_ONLY;
+                        dev->rw_flag &= WRITE_SERIAL;
                         break;
 
+                    case MONITOR:
+                        dev->rw_flag |= MONITOR_SERIAL;
                     default:
                         // not sure how this code would be reached, but I put it in anyways to feel better
                         break;
@@ -270,6 +278,10 @@ int parse_flags(serial_dev *dev, char **args, int len) {
 
                     case TIMEOUT:
                         dev->timeout = strtol(args[i], NULL, 10);
+                        break;
+
+                    case BUFFER_SIZE:
+                        
                         break;
 
                     default:

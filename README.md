@@ -14,6 +14,8 @@ Other options include:<br>
 `-w` - enable writing to the serial port<br>
 `-nr` - disable reading from the serial port<br>
 `-nw` - disable writing to the serial port<br>
+`-bs` - specify the buffer size (in bytes) of the buffer used to write to and read from the serial device<br>
+`-m` - run the program in monitor mode, to continuously read from the serial device
 <br>
 <br>
 While running the program, you can also input commands to change various settings:<br>
